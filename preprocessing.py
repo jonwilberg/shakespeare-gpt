@@ -2,7 +2,7 @@
 
 import re
 
-from config import EOS_TOKEN
+import config
 
 
 def load_non_breaking_prefixes(filepath: str) -> list[str]:
@@ -45,6 +45,6 @@ def sentence_boundary_disambiguation(corpus: str, non_breaking_prefixes: list[st
     # Remove multiple consecutive white spaces
     corpus_cleaned = re.sub(r"  +", " ", corpus_cleaned)
 
-    # Add <EOS> token to all statements
-    corpus_cleaned += " " + EOS_TOKEN
+    # Add SOS/EOS tokens to all statements
+    corpus_cleaned = f"{config.SOS_TOKEN} {corpus_cleaned} {config.EOS_TOKEN}"
     return corpus_cleaned
