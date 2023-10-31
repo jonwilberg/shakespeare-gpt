@@ -10,7 +10,11 @@ Peter Bloem.
 [Transformers from scratch](https://peterbloem.nl/blog/transformers).
 Blog post, 2019.
 
-Eduardo Muñoz. 
-[Attention is all you need: Discovering the Transformer paper](https://towardsdatascience.com/attention-is-all-you-need-discovering-the-transformer-paper-73e5ff5e0634). 
-Blog post, 2020.
+Jakob Uszkoreit,. 
+[Transformer: A Novel Neural Network Architecture for Language Understanding](https://blog.research.google/2017/08/transformer-novel-neural-network.html). 
+Blog post, 2017.
+
+TensorFlow. 
+[Neural machine translation with a Transformer and Keras](https://www.tensorflow.org/text/tutorials/transformer). 
+Tutorial.
 

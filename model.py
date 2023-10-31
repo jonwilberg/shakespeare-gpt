@@ -1,7 +1,75 @@
+"""Model definition based on tensorflow.org/text/tutorials/transformer"""
 import tensorflow as tf
 from tensorflow.keras import layers
 import numpy as np
 import time
+
+
+def positional_encoding(length: int, depth: int) -> tf.Tensor:
+    """Generates positional encodings for an input sequence of a given length and depth.
+
+    Positional encodings are essential in sequence-to-sequence models, such as transformers,
+    to provide information about the position of elements in the input sequence.
+
+    Args:
+        length: The length of the input sequence.
+        depth: The depth of the positional encoding, equal to the size of the hidden layers.
+
+    Returns:
+        A positional encoding tensor with shape (length, depth), cast to float32.
+    """
+    depth = depth/2
+    
+    positions = np.arange(length)[:, np.newaxis]     # (seq, 1)
+    depths = np.arange(depth)[np.newaxis, :]/depth   # (1, depth)
+    
+    angle_rates = 1 / (10000**depths)         # (1, depth)
+    angle_rads = positions * angle_rates      # (pos, depth)
+    
+    pos_encoding = np.concatenate([np.sin(angle_rads), np.cos(angle_rads)], axis=-1) 
+    
+    return tf.cast(pos_encoding, dtype=tf.float32)
+
+
+class PositionalEmbedding(tf.keras.layers.Layer):
+    """Custom Keras layer for adding positional embeddings to token embeddings in a transformer model."""
+    
+    def __init__(self, vocab_size, d_model):
+        super().__init__()
+        self.d_model = d_model
+        self.embedding = tf.keras.layers.Embedding(vocab_size, d_model, mask_zero=True) 
+        self.pos_encoding = positional_encoding(length=2048, depth=d_model)
+    
+    def compute_mask(self, *args, **kwargs):
+        return self.embedding.compute_mask(*args, **kwargs)
+    
+    def call(self, x: tf.Tensor) -> tf.Tensor:
+        """Forward pass of the layer, combining token embeddings and positional encodings.
+
+        Args:
+            x: Input tensor representing the token indices in the input sequence.
+
+        Returns:
+            tf.Tensor: Output tensor with positional embeddings added to the token embeddings.
+        """
+        length = tf.shape(x)[1]
+        x = self.embedding(x)
+        # This factor sets the relative scale of the embedding and positional_encoding.
+        x *= tf.math.sqrt(tf.cast(self.d_model, tf.float32))
+        x = x + self.pos_encoding[tf.newaxis, :length, :]
+        return x
+
+
+class BaseAttention(tf.keras.layers.Layer):
+    """Keras layer combining multi-head attention with a residual connection and layer normalization."""
+    def __init__(self, **kwargs):
+        super().__init__()
+        self.mha = tf.keras.layers.MultiHeadAttention(**kwargs)
+        self.layernorm = tf.keras.layers.LayerNormalization()
+        self.add = tf.keras.layers.Add()
+
+
+###
 
 
 def scaled_dot_product_attention(queries, keys, values, mask):

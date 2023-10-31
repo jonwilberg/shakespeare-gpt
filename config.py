@@ -8,13 +8,14 @@ NONBREAKING_ENG_PATH = DATA_DIR + "/nonbreaking_prefix.en"
 EOS_TOKEN = "eos"
 SOS_TOKEN = "sos"
 VOCAB_SIZE = 10_000
-MAX_SEQUENCE_LENGTH = 64
+MAX_TOKENS = 64
 
 # Model training
+BUFFER_SIZE = 100_000
 BATCH_SIZE = 64
 DROPOUT_RATE = 0.1
 CHECKPOINT_DIR = "checkpoints" 
-N_EPOCHS = 4
+N_EPOCHS = 1
 PRINT_FREQ = 100
 
 # Model structure
