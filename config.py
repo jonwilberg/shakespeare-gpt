@@ -12,7 +12,7 @@ MAX_TOKENS = 64
 
 # Model training
 BUFFER_SIZE = 100_000
-BATCH_SIZE = 64
+BATCH_SIZE = 256
 DROPOUT_RATE = 0.1
 CHECKPOINT_DIR = "checkpoints" 
 N_EPOCHS = 1
@@ -20,6 +20,6 @@ PRINT_FREQ = 100
 
 # Model structure
 D_MODEL = 64
-FFN_DIM = 128
+FFN_DIM = 512
 N_LAYERS = 4
 N_HEADS = 8
