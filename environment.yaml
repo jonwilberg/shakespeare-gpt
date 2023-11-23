@@ -1,0 +1,15 @@
+name: eng-nor-transformer
+channels:
+  - apple
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - tensorflow-deps
+  - jupyter
+  - chardet
+  - pandas
+  - matplotlib
+
+  - pip:
+    - tensorflow-macos
