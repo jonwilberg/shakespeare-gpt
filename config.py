@@ -11,12 +11,18 @@ VOCAB_SIZE = 10_000
 MAX_TOKENS = 64
 
 # Model training
+VAL_SHARE = 0.20
 BUFFER_SIZE = 100_000
-BATCH_SIZE = 256
+BATCH_SIZE = 50
 DROPOUT_RATE = 0.1
 CHECKPOINT_DIR = "checkpoints" 
 N_EPOCHS = 1
 PRINT_FREQ = 100
+OPTIMIZER_KWARGS = {
+    "beta_1": 0.9,
+    "beta_2": 0.98,
+    "epsilon": 1e-9
+}
 
 # Model structure
 D_MODEL = 64

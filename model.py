@@ -274,25 +274,174 @@ class Decoder(tf.keras.layers.Layer):
 
 
 class Transformer(tf.keras.Model):
-  def __init__(self, num_layers, d_model, num_heads, dff, input_vocab_size, target_vocab_size, dropout_rate=0.1):
-    super().__init__()
-    self.encoder = Encoder(num_layers=num_layers, d_model=d_model, num_heads=num_heads, dff=dff, vocab_size=input_vocab_size, dropout_rate=dropout_rate)
-    self.decoder = Decoder(num_layers=num_layers, d_model=d_model, num_heads=num_heads, dff=dff, vocab_size=target_vocab_size,dropout_rate=dropout_rate)
-    self.final_layer = tf.keras.layers.Dense(target_vocab_size)
+    """Transformer model implemented with Keras."""
+    def __init__(self, num_layers: int, d_model: int, num_heads: int, dff: int, input_vocab_size: int, target_vocab_size: int, dropout_rate: int = 0.1):
+        super().__init__()
+        self.encoder = Encoder(num_layers=num_layers, d_model=d_model, num_heads=num_heads, dff=dff, vocab_size=input_vocab_size, dropout_rate=dropout_rate)
+        self.decoder = Decoder(num_layers=num_layers, d_model=d_model, num_heads=num_heads, dff=dff, vocab_size=target_vocab_size,dropout_rate=dropout_rate)
+        self.final_layer = tf.keras.layers.Dense(target_vocab_size)
 
-  def call(self, inputs: tuple[tf.Tensor, tf.Tensor]) -> tf.Tensor:
-    # To use a Keras model with `.fit` you must pass all your inputs in the first argument.
-    context, x  = inputs
-    context = self.encoder(context)  # (batch_size, context_len, d_model)
-    x = self.decoder(x, context)  # (batch_size, target_len, d_model
-    logits = self.final_layer(x)  # (batch_size, target_len, target_vocab_size)
+    def call(self, inputs: tuple[tf.Tensor, tf.Tensor]) -> tf.Tensor:
+        """Perform a forward pass on the Transformer.
+        
+        Args:
+            inputs: To use a Keras model with `.fit` you must pass all your inputs in the first argument. Tuple with two input tensors representing the input token indices and the decoder sequence respectively
+    
+        Returns:
+            Transformer output
+        """
+        context, x  = inputs
+        context = self.encoder(context)  # (batch_size, context_len, d_model)
+        x = self.decoder(x, context)  # (batch_size, target_len, d_model
+        logits = self.final_layer(x)  # (batch_size, target_len, target_vocab_size)
+        
+        try:
+            # Drop the keras mask, so it doesn't scale the losses/metrics.
+            del logits._keras_mask
+        except AttributeError:
+            pass
+        
+        # Return the final output and the attention weights.
+        return logits
 
-    try:
-      # Drop the keras mask, so it doesn't scale the losses/metrics.
-      # b/250038731
-      del logits._keras_mask
-    except AttributeError:
-      pass
 
-    # Return the final output and the attention weights.
-    return logits
+class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
+    def __init__(self, d_model: int, warmup_steps: int = 4000):
+        super().__init__()
+        self.d_model = d_model
+        self.d_model = tf.cast(self.d_model, tf.float32)
+        self.warmup_steps = warmup_steps
+    
+    def __call__(self, step):
+        step = tf.cast(step, dtype=tf.float32)
+        arg1 = tf.math.rsqrt(step)
+        arg2 = step * (self.warmup_steps ** -1.5)
+        return tf.math.rsqrt(self.d_model) * tf.math.minimum(arg1, arg2)
+
+
+def masked_loss(label: tf.Tensor, pred: tf.Tensor) -> float:
+    """Computes the loss for predictions with a mask applied to ignore padding.
+
+    Args:
+        label: A tensor of true labels. Labels with zero are ignored in loss calculation.
+        pred: A tensor of predictions made by the model.
+
+    Returns:
+        Average loss after applying the mask.
+    """
+    mask = label != 0
+    loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction='none')
+    loss = loss_object(label, pred)
+    
+    mask = tf.cast(mask, dtype=loss.dtype)
+    loss *= mask
+    
+    loss = tf.reduce_sum(loss)/tf.reduce_sum(mask)
+    return loss
+
+
+def masked_accuracy(label: tf.Tensor, pred: tf.Tensor) -> float:
+    """Computes the accuracy for predictions with a mask applied to ignore padding.
+
+    Args:
+        label: A tensor of true labels. Labels with zero are ignored in loss calculation.
+        pred: A tensor of predictions made by the model.
+
+    Returns:
+        Average loss after applying the mask.
+    """
+    pred = tf.argmax(pred, axis=2)
+    label = tf.cast(label, pred.dtype)
+    match = label == pred
+    
+    mask = label != 0
+    
+    match = match & mask
+    
+    match = tf.cast(match, dtype=tf.float32)
+    mask = tf.cast(mask, dtype=tf.float32)
+    return tf.reduce_sum(match)/tf.reduce_sum(mask)
+
+
+class Translator(tf.Module):
+    """Translation module that uses a transformer to translate Spanish into English.
+    
+    This class encapsulates a transformer model for language translation. It expects a sentence in the
+    source language, tokenizes it, and uses the transformer model to generate the translated sentence in the
+    target language. The class supports dynamic token generation and also provides attention weights from
+    the transformer model, which can be useful for understanding the model's focus during translation.
+
+    Attributes:
+        tokenizers: A data structure holding tokenizers for the source and target languages.
+        transformer: A transformer model used for the translation task.
+    """
+    def __init__(self, tokenizers, transformer: tf.keras.Model):
+        self.tokenizers = tokenizers
+        self.transformer = transformer
+    
+    def __call__(self, sentence: tf.Tensor, max_length: int) -> tuple[tf.Tensor, tf.Tensor, tf.Tensor]:
+        """Translates a sentence from Spanish to English.
+
+        This method tokenizes the input sentence, feeds it into the transformer model, and generates a
+        translated sentence in the target language. It also returns the tokens of the translated sentence
+        and the attention weights from the transformer model.
+
+        Args:
+            sentence: A tensor containing the sentence to be translated.
+            max_length: The maximum length of the translated sentence in terms of tokens.
+
+        Returns:
+            A tuple containing the following elements:
+               - text: A tensor containing the translated sentence.
+               - tokens: A tensor containing the tokens of the translated sentence.
+               - attention_weights: A tensor containing the attention weights from the transformer model.
+        """
+        # The input sentence is Portuguese, hence adding the `[START]` and `[END]` tokens.
+        assert isinstance(sentence, tf.Tensor)
+        if len(sentence.shape) == 0:
+          sentence = sentence[tf.newaxis]
+        
+        sentence = self.tokenizers.pt.tokenize(sentence).to_tensor()
+        
+        encoder_input = sentence
+        
+        # As the output language is English, initialize the output with the
+        # English `[START]` token.
+        start_end = self.tokenizers.en.tokenize([''])[0]
+        start = start_end[0][tf.newaxis]
+        end = start_end[1][tf.newaxis]
+        
+        # `tf.TensorArray` is required here (instead of a Python list), so that the
+        # dynamic-loop can be traced by `tf.function`.
+        output_array = tf.TensorArray(dtype=tf.int64, size=0, dynamic_size=True)
+        output_array = output_array.write(0, start)
+        
+        for i in tf.range(max_length):
+          output = tf.transpose(output_array.stack())
+          predictions = self.transformer([encoder_input, output], training=False)
+        
+          # Select the last token from the `seq_len` dimension.
+          predictions = predictions[:, -1:, :]  # Shape `(batch_size, 1, vocab_size)`.
+        
+          predicted_id = tf.argmax(predictions, axis=-1)
+        
+          # Concatenate the `predicted_id` to the output which is given to the
+          # decoder as its input.
+          output_array = output_array.write(i+1, predicted_id[0])
+        
+          if predicted_id == end:
+            break
+        
+        output = tf.transpose(output_array.stack())
+        # The output shape is `(1, tokens)`.
+        text = tokenizers.en.detokenize(output)[0]  # Shape: `()`.
+        
+        tokens = tokenizers.en.lookup(output)[0]
+        
+        # `tf.function` prevents us from using the attention_weights that were
+        # calculated on the last iteration of the loop.
+        # So, recalculate them outside the loop.
+        self.transformer([encoder_input, output[:,:-1]], training=False)
+        attention_weights = self.transformer.decoder.last_attn_scores
+        
+        return text, tokens, attention_weights
