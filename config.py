@@ -1,18 +1,17 @@
 """Configuration file for the project."""
 
-# Preprocessing
+# Dataset
 DATA_DIR = "data"
 TRAIN_PATH = DATA_DIR + "/spa.txt"
-
-MAX_TOKENS = 64
-RESERVED_TOKENS = ["[PAD]", "[UNK]", "[START]", "[END]"]
-TOKENIZER_KWARGS = {"lower_case": True}
+VALIDATION_SHARE = 0.20
 
 # Tokenizer
-VOCAB_SIZE = 8000
+BERT_TOKENIZER_PARAMS = {"lower_case": True}
+RESERVED_TOKENS = ["[PAD]", "[UNK]", "[START]", "[END]"]
+VOCAB_SIZE = 3000
 
 # Model training
-VAL_SHARE = 0.20
+MAX_TOKENS = 64
 BUFFER_SIZE = 100_000
 BATCH_SIZE = 50
 DROPOUT_RATE = 0.1
