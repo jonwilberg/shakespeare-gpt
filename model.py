@@ -374,12 +374,14 @@ class Translator(tf.Module):
     Attributes:
         tokenizers: A data structure holding tokenizers for the source and target languages.
         transformer: A transformer model used for the translation task.
+        max_length: The maximum length of the translated sentence in terms of tokens.
     """
-    def __init__(self, tokenizers, transformer: tf.keras.Model):
+    def __init__(self, tokenizers, transformer: tf.keras.Model, max_length: int):
         self.tokenizers = tokenizers
         self.transformer = transformer
+        self.max_length = max_length
     
-    def __call__(self, sentence: tf.Tensor, max_length: int) -> tuple[tf.Tensor, tf.Tensor, tf.Tensor]:
+    def __call__(self, sentence: tf.Tensor) -> tuple[tf.Tensor, tf.Tensor, tf.Tensor]:
         """Translates a sentence from Spanish to English.
 
         This method tokenizes the input sentence, feeds it into the transformer model, and generates a
@@ -388,7 +390,6 @@ class Translator(tf.Module):
 
         Args:
             sentence: A tensor containing the sentence to be translated.
-            max_length: The maximum length of the translated sentence in terms of tokens.
 
         Returns:
             A tuple containing the following elements:
@@ -396,18 +397,18 @@ class Translator(tf.Module):
                - tokens: A tensor containing the tokens of the translated sentence.
                - attention_weights: A tensor containing the attention weights from the transformer model.
         """
-        # The input sentence is Portuguese, hence adding the `[START]` and `[END]` tokens.
+        # The input sentence is English, hence adding the `[START]` and `[END]` tokens.
         assert isinstance(sentence, tf.Tensor)
         if len(sentence.shape) == 0:
           sentence = sentence[tf.newaxis]
         
-        sentence = self.tokenizers.pt.tokenize(sentence).to_tensor()
+        sentence = self.tokenizers.eng.tokenize(sentence).to_tensor()
         
         encoder_input = sentence
         
-        # As the output language is English, initialize the output with the
-        # English `[START]` token.
-        start_end = self.tokenizers.en.tokenize([''])[0]
+        # As the output language is Spanish, initialize the output with the
+        # Spanish `[START]` token.
+        start_end = self.tokenizers.spa.tokenize([''])[0]
         start = start_end[0][tf.newaxis]
         end = start_end[1][tf.newaxis]
         
@@ -416,7 +417,7 @@ class Translator(tf.Module):
         output_array = tf.TensorArray(dtype=tf.int64, size=0, dynamic_size=True)
         output_array = output_array.write(0, start)
         
-        for i in tf.range(max_length):
+        for i in tf.range(self.max_length):
           output = tf.transpose(output_array.stack())
           predictions = self.transformer([encoder_input, output], training=False)
         
@@ -434,9 +435,9 @@ class Translator(tf.Module):
         
         output = tf.transpose(output_array.stack())
         # The output shape is `(1, tokens)`.
-        text = tokenizers.en.detokenize(output)[0]  # Shape: `()`.
+        text = self.tokenizers.spa.detokenize(output)[0]  # Shape: `()`.
         
-        tokens = tokenizers.en.lookup(output)[0]
+        tokens = self.tokenizers.spa.lookup(output)[0]
         
         # `tf.function` prevents us from using the attention_weights that were
         # calculated on the last iteration of the loop.
@@ -445,3 +446,13 @@ class Translator(tf.Module):
         attention_weights = self.transformer.decoder.last_attn_scores
         
         return text, tokens, attention_weights
+
+
+class ExportTranslator(tf.Module):
+    def __init__(self, translator):
+        self.translator = translator
+    
+    @tf.function(input_signature=[tf.TensorSpec(shape=[], dtype=tf.string)])
+    def __call__(self, sentence):
+        result, tokens, attention_weights = self.translator(sentence)
+        return result

@@ -1,7 +1,8 @@
-# Data files
+# Data and model files
 data/
 tokenizer/
 checkpoints/
+translator/
 
 # Pycharm
 .idea/
