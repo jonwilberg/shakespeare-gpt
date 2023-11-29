@@ -2,10 +2,14 @@
 
 # Dataset
 DATA_DIR = "data"
-TRAIN_PATH = DATA_DIR + "/spa.txt"
+RAW_DATA_PATH = DATA_DIR + "/spa.txt"
+TRAIN_DATA_PATH = DATA_DIR + "/tfds/train"
+VAL_DATA_PATH = DATA_DIR + "/tfds/validation"
 VALIDATION_SHARE = 0.20
 
+
 # Tokenizer
+TOKENIZER_PATH = "tokenizer"
 BERT_TOKENIZER_PARAMS = {"lower_case": True}
 RESERVED_TOKENS = ["[PAD]", "[UNK]", "[START]", "[END]"]
 VOCAB_SIZE = 3000
