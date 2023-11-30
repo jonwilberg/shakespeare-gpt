@@ -10,6 +10,8 @@ dependencies:
   - chardet
   - pandas
   - matplotlib
+  - pre-commit
 
   - pip:
     - tensorflow-macos
+    - tensorflow-text

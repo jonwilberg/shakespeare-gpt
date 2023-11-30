@@ -17,4 +17,3 @@ Blog post, 2017.
 TensorFlow. 
 [Neural machine translation with a Transformer and Keras](https://www.tensorflow.org/text/tutorials/transformer). 
 Tutorial.
-
