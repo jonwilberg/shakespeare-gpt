@@ -4,6 +4,9 @@ tokenizer/
 checkpoints/
 translator/
 
+# Mac files
+.DS_Store
+
 # Pycharm
 .idea/
 

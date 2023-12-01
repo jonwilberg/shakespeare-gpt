@@ -444,7 +444,7 @@ def masked_accuracy(label: tf.Tensor, pred: tf.Tensor) -> float:
 
 
 class Translator(tf.Module):
-    """Translation module using a transformer to translate Spanish into English.
+    """Module using a transformer to translate English into Norwegian.
 
     This class encapsulates a transformer model for language translation. It
     expects a sentence in the source language, tokenizes it, and uses the
@@ -469,7 +469,7 @@ class Translator(tf.Module):
     def __call__(
         self, sentence: tf.Tensor
     ) -> tuple[tf.Tensor, tf.Tensor, tf.Tensor]:
-        """Translates a sentence from Spanish to English.
+        """Translates a sentence from English to Norwegian.
 
         This method tokenizes the input sentence, feeds it into the transformer
         model, and generates a translated sentence in the target language. It
@@ -494,9 +494,9 @@ class Translator(tf.Module):
 
         encoder_input = sentence
 
-        # As the output language is Spanish, initialize the output with the
-        # Spanish `[START]` token.
-        start_end = self.tokenizers.spa.tokenize([""])[0]
+        # As the output language is Norwegian, initialize the output with the
+        # Norwegian `[START]` token.
+        start_end = self.tokenizers.nor.tokenize([""])[0]
         start = start_end[0][tf.newaxis]
         end = start_end[1][tf.newaxis]
 
@@ -527,9 +527,9 @@ class Translator(tf.Module):
 
         output = tf.transpose(output_array.stack())
         # The output shape is `(1, tokens)`.
-        text = self.tokenizers.spa.detokenize(output)[0]  # Shape: `()`.
+        text = self.tokenizers.nor.detokenize(output)[0]  # Shape: `()`.
 
-        tokens = self.tokenizers.spa.lookup(output)[0]
+        tokens = self.tokenizers.nor.lookup(output)[0]
 
         # `tf.function` prevents us from using the attention_weights that were
         # calculated on the last iteration of the loop.
