@@ -13,7 +13,7 @@ N_SENTENCES = 1_000_000
 TOKENIZER_PATH = "tokenizer"
 BERT_TOKENIZER_PARAMS = {
     "lower_case": False,
-    "normalization_form": "NFC",  # NFC norm to avoid 'å' to 'a' convert
+    "normalization_form": "NFC",  # NFC norm used to avoid converting å to a
 }
 RESERVED_TOKENS = ["[PAD]", "[UNK]", "[START]", "[END]"]
 N_SAMPLES_TOKENIZER = 50_000
