@@ -6,8 +6,6 @@ RAW_DATA_PATH = DATA_DIR + "/shakespeare.txt"
 TRAIN_DATA_PATH = DATA_DIR + "/tfds/train"
 VAL_DATA_PATH = DATA_DIR + "/tfds/validation"
 VALIDATION_SHARE = 0.10
-SENTENCE_MAX_LEN = 500
-N_SENTENCES = 1_000_000
 
 # Tokenizer
 VOCAB_PATH = DATA_DIR + "/vocab.txt"
