@@ -2,7 +2,7 @@
 
 # Dataset
 DATA_DIR = "data"
-RAW_DATA_PATH = DATA_DIR + "/en-nb.txt"
+RAW_DATA_PATH = DATA_DIR + "/shakespeare.txt"
 TRAIN_DATA_PATH = DATA_DIR + "/tfds/train"
 VAL_DATA_PATH = DATA_DIR + "/tfds/validation"
 VALIDATION_SHARE = 0.20
@@ -10,14 +10,15 @@ SENTENCE_MAX_LEN = 500
 N_SENTENCES = 1_000_000
 
 # Tokenizer
+VOCAB_PATH = DATA_DIR + "/vocab.txt"
 TOKENIZER_PATH = "tokenizer"
 BERT_TOKENIZER_PARAMS = {
-    "lower_case": False,
-    "normalization_form": "NFC",  # NFC norm used to avoid converting å to a
+    "lower_case": True
 }
+LEARN_PARAMS = {}
 RESERVED_TOKENS = ["[PAD]", "[UNK]", "[START]", "[END]"]
 N_SAMPLES_TOKENIZER = 50_000
-VOCAB_SIZE = 8000
+VOCAB_SIZE = 6000
 
 # Model training
 MAX_TOKENS = 64
