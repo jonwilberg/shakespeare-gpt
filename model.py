@@ -133,12 +133,11 @@ class DecoderLayer(tf.keras.layers.Layer):
         )
         self.ffn = FeedForward(d_model, dff)
 
-    def call(self, x: tf.Tensor, context: tf.Tensor) -> tf.Tensor:
+    def call(self, x: tf.Tensor) -> tf.Tensor:
         """Perform a forward pass on the decoder layer.
 
         Args:
             x: Input tensor representing the decoder sequence
-            context: Output from the encoder
 
         Returns:
             Output tensor
@@ -148,7 +147,7 @@ class DecoderLayer(tf.keras.layers.Layer):
         return x  # Shape (batch_size, seq_len, d_model)
 
 
-class Decoder(tf.keras.layers.Layer):
+class Decoder(tf.keras.Model):
     """Encoder with a positional embedding layer and several decoder layers."""
 
     def __init__(
@@ -160,7 +159,7 @@ class Decoder(tf.keras.layers.Layer):
         vocab_size: int,
         dropout_rate: int = 0.1,
     ):
-        super(Decoder, self).__init__()
+        super().__init__()
         self.d_model = d_model
         self.num_layers = num_layers
         self.pos_embedding = PositionalEmbedding(
@@ -178,12 +177,11 @@ class Decoder(tf.keras.layers.Layer):
         ]
         self.final_layer = tf.keras.layers.Dense(vocab_size)
 
-    def call(self, x: tf.Tensor, context: tf.Tensor) -> tf.Tensor:
+    def call(self, x: tf.Tensor) -> tf.Tensor:
         """Perform a forward pass on the decoder.
 
         Args:
             x: Input tensor representing the decoder sequence
-            context: Output from the encoder
 
         Returns:
             Decoder output
@@ -192,7 +190,7 @@ class Decoder(tf.keras.layers.Layer):
         x = self.dropout(x)
 
         for i in range(self.num_layers):
-            x = self.dec_layers[i](x, context)
+            x = self.dec_layers[i](x)
         logits = self.final_layer(x)  # (batch_size, target_len, vocab_size)
 
         try:

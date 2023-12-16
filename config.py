@@ -20,18 +20,18 @@ VOCAB_SIZE = 6000
 # Model training
 MAX_TOKENS = 128
 BUFFER_SIZE = 100_000
-BATCH_SIZE = 50
+BATCH_SIZE = 20
 DROPOUT_RATE = 0.1
 CHECKPOINT_DIR = "checkpoints"
-N_EPOCHS = 3
+N_EPOCHS = 100
 PRINT_FREQ = 100
 OPTIMIZER_KWARGS = {"beta_1": 0.9, "beta_2": 0.98, "epsilon": 1e-9}
 
 # Model structure
 D_MODEL = 64
 FFN_DIM = 512
-N_LAYERS = 4
+N_LAYERS = 2
 N_HEADS = 8
 
-# Translator
-TRANSLATOR_PATH = "translator"
+# GPT
+GPT_PATH = "gpt"
