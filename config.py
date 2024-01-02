@@ -10,9 +10,7 @@ VALIDATION_SHARE = 0.10
 # Tokenizer
 VOCAB_PATH = DATA_DIR + "/vocab.txt"
 TOKENIZER_PATH = "tokenizer"
-BERT_TOKENIZER_PARAMS = {
-    "lower_case": True
-}
+BERT_TOKENIZER_PARAMS = {"lower_case": True}
 LEARN_PARAMS = {}
 RESERVED_TOKENS = ["[PAD]", "[UNK]", "[START]", "[END]"]
 VOCAB_SIZE = 6000

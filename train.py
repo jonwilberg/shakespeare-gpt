@@ -1,14 +1,9 @@
 # Train Transformer decoder
 
 import tensorflow as tf
-from tensorflow.keras import layers
-import tensorflow_text as text
-import pandas as pd
-import numpy as np
-from matplotlib import pyplot as plt
-from model import Decoder, masked_loss, masked_accuracy, CustomSchedule, GPT
 
 import config
+from model import GPT, CustomSchedule, Decoder, masked_accuracy, masked_loss
 
 
 def split_input_target(sequence: tf.Tensor) -> tuple[tf.Tensor, tf.Tensor]:
@@ -70,7 +65,7 @@ def get_compiled_decoder() -> tf.keras.Model:
         num_heads=config.N_HEADS,
         dff=config.FFN_DIM,
         vocab_size=config.VOCAB_SIZE,
-        dropout_rate=config.DROPOUT_RATE
+        dropout_rate=config.DROPOUT_RATE,
     )
     decoder.compile(
         loss=masked_loss, optimizer=optimizer, metrics=[masked_accuracy]
@@ -94,9 +89,7 @@ if __name__ == "__main__":
     tokenizer = tf.saved_model.load(config.TOKENIZER_PATH)
 
     gpt = GPT(
-        decoder=decoder,
-        tokenizer=tokenizer,
-        output_length=config.OUTPUT_LENGTH
+        decoder=decoder, tokenizer=tokenizer, output_length=config.OUTPUT_LENGTH
     )
 
     tf.saved_model.save(gpt, export_dir=config.GPT_PATH)
