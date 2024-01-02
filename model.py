@@ -260,3 +260,40 @@ def masked_accuracy(label: tf.Tensor, pred: tf.Tensor) -> float:
     match = tf.cast(match, dtype=tf.float32)
     mask = tf.cast(mask, dtype=tf.float32)
     return tf.reduce_sum(match) / tf.reduce_sum(mask)
+
+
+class GPT(tf.Module):
+    """GPT model for generating text based on Shakespeare's works."""
+
+    def __init__(self, tokenizer, decoder: tf.keras.Model, output_length: int):
+        self.tokenizer = tokenizer
+        self.decoder = decoder
+        self.output_length = output_length
+
+    @tf.function
+    def __call__(self, prompt: str) -> str:
+        """Generate text based on a prompt.
+
+        Args:
+            prompt: A string to prompt the model to generate text.
+
+        Returns:
+            A string of generated text.
+        """
+        tokens = self.tokenizer.tokenize([prompt]).to_tensor()
+        output_array = tf.TensorArray(dtype=tf.int64, size=0, dynamic_size=True)
+        output_array = output_array.unstack(tokens[0])
+        i = tf.shape(tokens)[1]
+
+        for _ in range(self.output_length):
+            output_tensor = tf.expand_dims(output_array.stack(), axis=0)
+
+            # Select the last predicted token from the `seq_len` dimension.
+            predictions = self.decoder(output_tensor, training=False)[:, -1:, :]
+            predicted_token = tf.argmax(predictions, axis=-1)[0, 0]
+            output_array = output_array.write(i, predicted_token)
+            i += 1
+
+        predicted_tokens = tf.expand_dims(output_array.stack(), axis=0)
+        generated_text = self.tokenizer.detokenize(predicted_tokens)
+        return generated_text[0]

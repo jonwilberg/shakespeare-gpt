@@ -2,7 +2,7 @@
 data/
 tokenizer/
 checkpoints/
-translator/
+gpt/
 
 # Mac files
 .DS_Store
