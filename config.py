@@ -10,13 +10,16 @@ VALIDATION_SHARE = 0.10
 # Tokenizer
 VOCAB_PATH = DATA_DIR + "/vocab.txt"
 TOKENIZER_PATH = "tokenizer"
-BERT_TOKENIZER_PARAMS = {"lower_case": True}
+BERT_TOKENIZER_PARAMS = {"lower_case": False, "keep_whitespace": False}
 LEARN_PARAMS = {}
-RESERVED_TOKENS = ["[PAD]", "[UNK]", "[START]", "[END]"]
+NEWLINE_TOKEN = " NEWLINE "
+DOUBLEN_TOKEN = " DOUBLEN "
+RESERVED_TOKENS = []
 VOCAB_SIZE = 6000
 
 # Model training
 MAX_TOKENS = 128
+N_SAMPLES = 100_000
 BUFFER_SIZE = 100_000
 BATCH_SIZE = 20
 DROPOUT_RATE = 0.1

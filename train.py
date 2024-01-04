@@ -94,8 +94,3 @@ if __name__ == "__main__":
     )
     print(gpt("king lear:"))
     tf.saved_model.save(gpt, export_dir=config.GPT_PATH)
-
-# TO DO:
-# 1. Change training data to use randomly sampled indexes from the dataset
-# 2. Make model probabilistic
-# 3. Test tiktoken encoder
