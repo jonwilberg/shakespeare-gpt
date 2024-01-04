@@ -1,6 +1,7 @@
 # Train Transformer decoder
 
 import tensorflow as tf
+import tensorflow_text as text  # noqa: F401
 
 import config
 from model import GPT, CustomSchedule, Decoder, masked_accuracy, masked_loss
@@ -75,6 +76,7 @@ def get_compiled_decoder() -> tf.keras.Model:
 
 if __name__ == "__main__":
     train_batches, val_batches = load_dataset()
+    tokenizer = tf.saved_model.load(config.TOKENIZER_PATH)
     decoder = get_compiled_decoder()
 
     # Build the transformer by applying it to a sample
@@ -86,11 +88,14 @@ if __name__ == "__main__":
     decoder.fit(
         train_batches, epochs=config.N_EPOCHS, validation_data=val_batches
     )
-    tokenizer = tf.saved_model.load(config.TOKENIZER_PATH)
 
     gpt = GPT(
         decoder=decoder, tokenizer=tokenizer, output_length=config.OUTPUT_LENGTH
     )
-
-    tf.saved_model.save(gpt, export_dir=config.GPT_PATH)
     print(gpt("king lear:"))
+    tf.saved_model.save(gpt, export_dir=config.GPT_PATH)
+
+# TO DO:
+# 1. Change training data to use randomly sampled indexes from the dataset
+# 2. Make model probabilistic
+# 3. Test tiktoken encoder

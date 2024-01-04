@@ -70,7 +70,7 @@ class BaseAttention(tf.keras.layers.Layer):
     def __init__(self, **kwargs):
         super().__init__()
         self.mha = tf.keras.layers.MultiHeadAttention(**kwargs)
-        self.layernorm = tf.keras.layers.LayerNormalization()
+        self.layer_norm = tf.keras.layers.LayerNormalization()
         self.add = tf.keras.layers.Add()
 
 
@@ -86,10 +86,11 @@ class CausalSelfAttention(BaseAttention):
         Returns:
             Output tensor
         """
-        attn_output = self.mha(query=x, value=x, key=x, use_causal_mask=True)
-        x = self.add([x, attn_output])
-        x = self.layernorm(x)
-        return x
+        x_norm = self.layer_norm(x)
+        attn_output = self.mha(
+            query=x_norm, value=x_norm, key=x_norm, use_causal_mask=True
+        )
+        return self.add([x, attn_output])
 
 
 class FeedForward(tf.keras.layers.Layer):
@@ -97,6 +98,7 @@ class FeedForward(tf.keras.layers.Layer):
 
     def __init__(self, d_model: int, dff: int, dropout_rate: float = 0.1):
         super().__init__()
+        self.layer_norm = tf.keras.layers.LayerNormalization()
         self.seq = tf.keras.Sequential(
             [
                 tf.keras.layers.Dense(dff, activation="relu"),
@@ -105,7 +107,6 @@ class FeedForward(tf.keras.layers.Layer):
             ]
         )
         self.add = tf.keras.layers.Add()
-        self.layer_norm = tf.keras.layers.LayerNormalization()
 
     def call(self, x: tf.Tensor) -> tf.Tensor:
         """Apply forward pass of FeedForward network.
@@ -116,9 +117,8 @@ class FeedForward(tf.keras.layers.Layer):
         Returns:
             Output tensor
         """
-        x = self.add([x, self.seq(x)])
-        x = self.layer_norm(x)
-        return x
+        x_norm = self.layer_norm(x)
+        return self.add([x, self.seq(x_norm)])
 
 
 class DecoderLayer(tf.keras.layers.Layer):
@@ -175,6 +175,7 @@ class Decoder(tf.keras.Model):
             )
             for _ in range(num_layers)
         ]
+        self.layer_norm = tf.keras.layers.LayerNormalization()
         self.final_layer = tf.keras.layers.Dense(vocab_size)
 
     def call(self, x: tf.Tensor) -> tf.Tensor:
@@ -191,6 +192,8 @@ class Decoder(tf.keras.Model):
 
         for i in range(self.num_layers):
             x = self.dec_layers[i](x)
+
+        x = self.layer_norm(x)
         logits = self.final_layer(x)  # (batch_size, target_len, vocab_size)
 
         try:
@@ -290,7 +293,9 @@ class GPT(tf.Module):
 
             # Select the last predicted token from the `seq_len` dimension.
             predictions = self.decoder(output_tensor, training=False)[:, -1:, :]
-            predicted_token = tf.argmax(predictions, axis=-1)[0, 0]
+            probabilities = tf.keras.activations.softmax(predictions, axis=-1)
+            logits = tf.math.log(probabilities)[0]
+            predicted_token = tf.random.categorical(logits, num_samples=1)[0, 0]
             output_array = output_array.write(i, predicted_token)
             i += 1
 
