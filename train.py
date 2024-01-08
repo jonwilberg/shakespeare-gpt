@@ -89,8 +89,5 @@ if __name__ == "__main__":
         train_batches, epochs=config.N_EPOCHS, validation_data=val_batches
     )
 
-    gpt = GPT(
-        decoder=decoder, tokenizer=tokenizer, output_length=config.OUTPUT_LENGTH
-    )
-    print(gpt("king lear:"))
+    gpt = GPT(decoder=decoder, tokenizer=tokenizer)
     tf.saved_model.save(gpt, export_dir=config.GPT_PATH)
